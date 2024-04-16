@@ -16,6 +16,11 @@ app.set('view engine', 'jade');
 app.use('uploads', express.static('uploads'));
 
 app.use('/api', require('./routes'));
+//existsSyncs проверяет есть ли какая то папка
+if (!fs.existsSync('uploads')) {
+  //если false то создаем папку
+  fs.mkdirSync('uploads');
+}
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
