@@ -67,6 +67,7 @@ const UserController = {
       //findUnique работает только с id
       const user = await prisma.user.findUnique({
         where: { id },
+        //эта строка добавляет в user еще его подписчиков и на кого подписан
         include: { followers: true, following: true },
       });
       if (!user) {
