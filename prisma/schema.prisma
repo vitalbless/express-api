@@ -20,7 +20,7 @@ model User {
   password    String
   name        String?
   avatarUrl   String?
-  dataOfBirth DateTime?
+  dateOfBirth DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   bio         String?

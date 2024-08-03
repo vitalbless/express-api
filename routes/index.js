@@ -19,8 +19,8 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-
-const uploads = multer({ storage: storage });
+//название uploads надо исправить
+const upload = multer({ storage: storage });
 //Роуты пользователя
 router.post('/register', UserController.register);
 router.post('/login', UserController.login);
@@ -29,7 +29,7 @@ router.get('/users/:id', authenticateToken, UserController.getUserById);
 router.put(
   '/users/:id',
   authenticateToken,
-  uploads.single('avatar'),
+  upload.single('avatar'),
   UserController.updateUser
 );
 //Роуты постов
