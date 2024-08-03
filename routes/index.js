@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-//название uploads надо исправить
+
 const upload = multer({ storage: storage });
 //Роуты пользователя
 router.post('/register', UserController.register);
