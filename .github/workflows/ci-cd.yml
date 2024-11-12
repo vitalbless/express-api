@@ -27,4 +27,7 @@ jobs:
       - name: Start application
         run: |
           nohup npm start &  # Запускаем приложение в фоновом режиме
+          
+      - name: Get Public IP
+        run: curl https://api.ipify.org
 
