@@ -1,33 +1,18 @@
-name: CI/CD Pipeline
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - main 
-  pull_request:
-    branches:
-      - main  
+      - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '19' 
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Start application
-        run: |
-          nohup npm start &  # Запускаем приложение в фоновом режиме
-          
-      - name: Get Public IP
-        run: curl https://api.ipify.org
-
+    - name: Deploy to server
+      run: |
+        ssh root@45.130.9.212 "cd express-api && git pull origin main && docker-compose up -d --build"
