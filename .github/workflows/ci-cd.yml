@@ -15,4 +15,5 @@ jobs:
 
     - name: Deploy to server
       run: |
-        ssh root@45.130.9.212 "cd express-api && git pull origin main && docker-compose up -d --build"
+        ssh -o StrictHostKeyChecking=no root@45.130.9.212 "cd express-api && git pull origin main && docker-compose up -d --build"
+
