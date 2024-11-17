@@ -11,9 +11,11 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Deploy to server
-      run: |
-        ssh -o StrictHostKeyChecking=no root@45.130.9.212 "cd express-api && git pull origin main && docker-compose up -d --build"
+    - name: Install deps
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
 
