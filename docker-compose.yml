@@ -1,4 +1,3 @@
-# версия синтаксиса compose файла
 version: '3'
 services:
   express-app:
