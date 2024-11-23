@@ -27,12 +27,17 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          # Остановка старого контейнера, если он запущен
-          docker stop express-app || true
-          docker rm express-app || true
           # Копирование образа на удалённый сервер
           docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bunzip2 | docker load'
+          
+          # Запуск нового контейнера
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          # Остановка старого контейнера, если он запущен
+          if [ "$(docker ps -q -f name=express-app)" ]; then
+              docker stop express-app || true
+              docker rm express-app || true
+          fi
           # Запуск нового контейнера
           docker run -d --name express-app -p 3000:3000 express-app:latest
           EOF
+
