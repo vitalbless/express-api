@@ -20,7 +20,9 @@ jobs:
       # 2. Логин в Selectel Container Registry
       - name: Log in to Selectel Container Registry
         run: |
-          echo "uhSMdFegxDrMPfRpUGCAus92T_382575" | docker login --username selectel-token --password-stdin cr.selcloud.ru
+          echo "Logging in to Selectel..."
+          echo "${{ secrets.SELECTEL_TOKEN }}" | docker login --username selectel-token --password-stdin cr.selcloud.ru
+
 
       # 3. Сборка Docker-образа
       - name: Build Docker Image
