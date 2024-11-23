@@ -1,7 +1,10 @@
-name: Deploy to Server
+name: CI/CD Pipeline
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -10,9 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1. Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install deps
-      run: npm ci
+      # 2. Логин в Selectel Container Registry
+      - name: Log in to Selectel Container Registry
+        run: |
+          echo "${{ secrets.SELECTEL_TOKEN }}" | docker login --username selectel-token --password-stdin cr.selcloud.ru
 
+      # 3. Сборка Docker-образа
+      - name: Build Docker Image
+        run: |
+          docker build -t cr.selcloud.ru/express-api/express-app:latest .
+
+      # 4. Push Docker-образа в Selectel Container Registry
+      - name: Push Docker Image
+        run: |
+          docker push cr.selcloud.ru/express-api/express-app:latest
+
+      # 5. Подключение и деплой на сервере Ubuntu через SSH с паролем
+      - name: Deploy to server
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          # Остановка старого контейнера
+          docker stop express-app || true
+          docker rm express-app || true
+          # Запуск нового контейнера
+          docker pull cr.selcloud.ru/express-api/express-app:latest
+          docker run -d --name express-app -p 3000:3000 cr.selcloud.ru/express-api/express-app:latest
+          EOF
