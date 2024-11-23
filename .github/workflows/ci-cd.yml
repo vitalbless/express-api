@@ -47,8 +47,11 @@ jobs:
               docker rm express-app || true
           fi
           
-          # Запуск нового контейнера
-          docker run -d --name express-app -p 3000:3000 express-app:latest
+          # Запуск нового контейнера с проверкой ошибок
+          if ! docker run -d --name express-app -p 3000:3000 express-app:latest; then
+              echo "Ошибка при запуске контейнера express-app"
+              exit 1
+          fi
 
           # Очистка временных файлов
           sudo rm -rf /tmp/*
