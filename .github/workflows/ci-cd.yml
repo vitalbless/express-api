@@ -30,14 +30,20 @@ jobs:
           # Копирование образа на удалённый сервер
           docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bunzip2 | docker load'
           
-          # Запуск нового контейнера
+          # Выполнение npm install на удалённом сервере и запуск нового контейнера
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          # Переход в директорию проекта (замените /app на путь к вашему проекту)
+          cd /app 
+          
+          # Установка зависимостей
+          npm install
+
           # Остановка старого контейнера, если он запущен
-          if [ "$(docker ps -q -f name=express-app)" ]; then
+          if [ "\$(docker ps -q -f name=express-app)" ]; then
               docker stop express-app || true
               docker rm express-app || true
           fi
+          
           # Запуск нового контейнера
           docker run -d --name express-app -p 3000:3000 express-app:latest
           EOF
-
