@@ -32,8 +32,6 @@ jobs:
           
           # Выполнение очистки и развертывания на удалённом сервере
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          # Очистка старых Docker-образов и контейнеров
-          docker system prune -af
         
           # Остановка старого контейнера, если он запущен
           if [ "\$(docker ps -q -f name=express-app)" ]; then
