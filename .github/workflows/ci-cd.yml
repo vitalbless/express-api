@@ -24,9 +24,10 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bunzip2 | docker load'
+          docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          'bunzip2 | docker load && echo "Image successfully loaded" || { echo "Failed to load image"; exit 1; }'
 
-      # 4. Очистка Docker на сервере
+      # 4. Очистка старых контейнеров и данных
       - name: Prune old Docker data
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
@@ -42,18 +43,11 @@ jobs:
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
           "if [ \$(docker ps -q -f name=express-app) ]; then docker stop express-app && docker rm express-app; fi"
 
-      # 6. Освобождение порта 3000 (если занят)
-      - name: Free port 3000 if occupied
-        env:
-          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          "if lsof -i:3000; then fuser -k 3000/tcp; fi"
-
-      # 7. Запуск нового контейнера
+      # 6. Запуск нового контейнера
       - name: Run new container
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
           "docker run -d --name express-app -p 3000:3000 express-app:latest"
+
