@@ -18,6 +18,12 @@ app.use(cookieParser());
 // Убираем настройку для view engine, так как она не нужна для серверных ошибок
 // app.set('view engine', 'ejs');
 
+// Главная страница
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
+// Убираем настройку для favicon.ico
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Раздача статических файлов из папки 'uploads'
