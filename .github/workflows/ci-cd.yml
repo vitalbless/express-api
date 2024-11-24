@@ -26,11 +26,18 @@ jobs:
           docker save express-app:latest | gzip > express-app.tar.gz
 
       # 4. Передача файла с образом на сервер
-      - name: Transfer Docker Image File
+      - name: Transfer Docker Image
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          sshpass -e scp -o StrictHostKeyChecking=no express-app.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+          echo "Starting to transfer Docker image..."
+          # Удаление старого файла на сервере (если существует)
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'rm -f /tmp/express-app.tar.gz'
+          
+          # Архивирование и передача образа
+          docker save express-app:latest | gzip | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cat > /tmp/express-app.tar.gz'
+          echo "Image successfully transferred and saved"
+
 
       # 5. Загрузка образа на сервере
       - name: Load Docker Image on Server
