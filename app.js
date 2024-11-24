@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const fs = require('fs');
 const cors = require('cors');
+const favicon = require('serve-favicon');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
 // Убираем настройку для view engine, так как она не нужна для серверных ошибок
 // app.set('view engine', 'ejs');
 
@@ -31,6 +33,8 @@ if (!fs.existsSync('uploads')) {
 app.use(function (req, res, next) {
   next(createError(404));
 });
+
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 // error handler
 app.use(function (err, req, res, next) {
