@@ -46,10 +46,12 @@ jobs:
           "if [ \$(docker ps -q -f name=express-app) ]; then docker stop express-app && docker rm express-app; fi"
 
       # 6. Запуск нового контейнера
-      - name: Run new container
+      - name: Run New Container with Debugging
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
+          echo "Starting new container with debug logs..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          "docker run -d --name express-app -p 3000:3000 express-app:latest"
+          "docker run -d --name express-app -p 3000:3000 express-app:latest || { echo 'Failed to start container'; docker logs express-app || true; exit 1; }"
+
 
