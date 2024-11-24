@@ -52,7 +52,5 @@ jobs:
               echo "Ошибка при запуске контейнера express-app"
               exit 1
           fi
-
-          # Очистка временных файлов
-          sudo rm -rf /tmp/*
+          
           EOF
