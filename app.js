@@ -14,14 +14,15 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.set('view engine', 'ejs');
+// Убираем настройку для view engine, так как она не нужна для серверных ошибок
+// app.set('view engine', 'ejs');
 
 // Раздача статических файлов из папки 'uploads'
 app.use('uploads', express.static('uploads'));
 
 app.use('/api', require('./routes'));
 
-// Проверка и создание папки 'uploads', если её нет
+// Проверка и создание папки 'uploads'
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
@@ -33,22 +34,15 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // Логируем ошибку в консоль
+  // Логирование ошибки в консоль
+  console.error(`Error: ${err.message}`);
   console.error(err.stack);
 
-  // Устанавливаем локальные переменные для ошибки
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // Отправляем ответ с ошибкой в браузер
-  res.status(err.status || 500);
-  if (req.app.get('env') === 'development') {
-    // В режиме разработки показываем стек ошибки
-    res.render('error', { error: err.stack });
-  } else {
-    // В продакшн-среде показываем только общее сообщение
-    res.render('error', { error: 'Something went wrong!' });
-  }
+  // Отправка стандартного ответа 500, без рендеринга страницы
+  res.status(err.status || 500).send('Server error');
 });
+
+module.exports = app;
+
 
 module.exports = app;
