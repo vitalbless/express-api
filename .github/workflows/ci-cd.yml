@@ -32,20 +32,6 @@ jobs:
           
           # Выполнение очистки и развертывания на удалённом сервере
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          # Создание директории проекта, если она не существует
-          mkdir -p /app 
-          cd /app 
-          
-          # Копирование файлов проекта (например, с локальной машины)
-          # Используйте scp или другой метод для копирования файлов в /app
-          
-          # Установка Node.js и npm (если они не установлены)
-          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          
-          # Установка зависимостей
-          npm install
-        
           # Очистка старых Docker-образов и контейнеров
           docker system prune -af
         
