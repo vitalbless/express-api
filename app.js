@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const fs = require('fs');
 const cors = require('cors');
-const favicon = require('serve-favicon');
 require('dotenv').config();
 
 const app = express();
@@ -33,8 +32,6 @@ if (!fs.existsSync('uploads')) {
 app.use(function (req, res, next) {
   next(createError(404));
 });
-
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 // error handler
 app.use(function (err, req, res, next) {
