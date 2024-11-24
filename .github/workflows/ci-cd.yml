@@ -10,49 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Клонирование репозитория
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # 2. Сборка Docker-образа
       - name: Build Docker Image
         run: |
           echo "Building Docker image..."
           docker build -t express-app:latest .
           echo "Docker image built successfully"
 
-      # 3. Передача Docker-образа на удаленный сервер
       - name: Transfer Docker Image
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           echo "Starting to transfer Docker image..."
-          # Удаление старого архива на сервере
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'rm -f /tmp/express-app.tar.gz'
-          
-          # Архивирование и передача нового Docker-образа
           docker save express-app:latest | gzip | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cat > /tmp/express-app.tar.gz'
           echo "Docker image successfully transferred and saved"
 
-      # 4. Деплой приложения на сервер
+      - name: Clean Up Old Images
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Cleaning up old images and containers..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          docker image prune -f
+          docker container prune -f
+          EOF
+          echo "Clean up completed successfully"
+
       - name: Deploy Application
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           echo "Starting application deployment..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          
-          # Разархивирование Docker-образа
           docker load < /tmp/express-app.tar.gz
-          
-          # Очистка старого контейнера
           if [ "\$(docker ps -q -f name=express-app)" ]; then
               docker stop express-app || true
               docker rm express-app || true
           fi
-          
-          # Запуск нового контейнера
           docker run -d --name express-app -p 3000:3000 express-app:latest
-          
-          echo "Application deployed successfully"
           EOF
