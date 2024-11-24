@@ -24,8 +24,10 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
+          echo "Starting to transfer Docker image..."
           docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          'bunzip2 | docker load && echo "Image successfully loaded" || { echo "Failed to load image"; exit 1; }'
+          'bunzip2 | docker load && docker images | grep express-app && echo "Image successfully loaded" || { echo "Failed to load image"; exit 1; }'
+
 
       # 4. Очистка старых контейнеров и данных
       - name: Prune old Docker data
