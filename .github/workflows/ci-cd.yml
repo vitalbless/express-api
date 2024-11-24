@@ -18,40 +18,40 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t express-app:latest .
+          docker images
 
-      # 3. Передача Docker-образа на сервер
-      - name: Transfer Docker Image
+      # 3. Сохранение Docker-образа в файл
+      - name: Save Docker Image
+        run: |
+          docker save express-app:latest | gzip > express-app.tar.gz
+
+      # 4. Передача файла с образом на сервер
+      - name: Transfer Docker Image File
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          echo "Starting to transfer Docker image..."
-          docker save express-app:latest | bzip2 | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          'bunzip2 | docker load && docker images | grep express-app && echo "Image successfully loaded" || { echo "Failed to load image"; exit 1; }'
+          sshpass -e scp -o StrictHostKeyChecking=no express-app.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
-
-      # 4. Очистка старых контейнеров и данных
-      - name: Prune old Docker data
+      # 5. Загрузка образа на сервере
+      - name: Load Docker Image on Server
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          "docker system prune -af"
+          "gzip -d /tmp/express-app.tar.gz && docker load < /tmp/express-app.tar && docker images"
 
-      # 5. Остановка и удаление старого контейнера
-      - name: Stop and remove old container
+      # 6. Остановка старого контейнера
+      - name: Stop and Remove Old Container
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
           "if [ \$(docker ps -q -f name=express-app) ]; then docker stop express-app && docker rm express-app; fi"
 
-      # 6. Запуск нового контейнера
-      - name: Run New Container with Debugging
+      # 7. Запуск нового контейнера
+      - name: Run New Container
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          echo "Starting new container with debug logs..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          "docker run -d --name express-app -p 3000:3000 express-app:latest || { echo 'Failed to start container'; docker logs express-app || true; exit 1; }"
-
-
+          "docker run -d --name express-app -p 3000:3000 express-app:latest || { echo 'Failed to start container'; exit 1; }"
