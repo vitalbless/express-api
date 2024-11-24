@@ -18,6 +18,8 @@ app.use(cookieParser());
 // Убираем настройку для view engine, так как она не нужна для серверных ошибок
 // app.set('view engine', 'ejs');
 
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Раздача статических файлов из папки 'uploads'
 app.use('uploads', express.static('uploads'));
 
