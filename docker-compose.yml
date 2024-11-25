@@ -18,8 +18,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: monty
       MONGO_INITDB_ROOT_PASSWORD: pass
-      # Убираем настройку репликации
+      # Отключение репликации
       MONGO_REPLICA_SET_KEY: ""
       MONGO_INITDB_REPLICA_SET_NAME: ""
+      # Убедитесь, что MongoDB запускается без репликации
+    volumes:
+      - /path/to/host/data:/data/db  # Используйте том для хранения данных
     mem_limit: 512m
     mem_reservation: 256m
