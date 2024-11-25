@@ -29,23 +29,20 @@ jobs:
         run: |
           echo "Starting application deployment with Docker Compose..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          # Распаковываем приложение
+          # Распаковываем архив с файлами
           rm -rf /opt/express-app
           mkdir -p /opt/express-app
-          tar -xzf /tmp/app.tar.gz -C /opt/express-app
-          rm /tmp/app.tar.gz
+          tar -xzf /tmp/docker-compose-files.tar.gz -C /opt/express-app
+          rm /tmp/docker-compose-files.tar.gz
           
-          # Перемещаем docker-compose.yml
-          mv /tmp/docker-compose.yml /opt/express-app/docker-compose.yml
-
           # Переходим в каталог приложения
           cd /opt/express-app
 
           # Удаляем старые контейнеры и образы
-          docker-compose down --remove-orphans
-          docker-compose build
+          docker compose down --remove-orphans
+          docker compose build
           
           # Запускаем новое развертывание
-          docker-compose up -d
+          docker compose up -d
           EOF
           echo "Deployment completed successfully"
