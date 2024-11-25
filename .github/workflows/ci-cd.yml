@@ -13,59 +13,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build Docker Image
-        run: |
-          echo "Building Docker image..."
-          docker build -t express-app:latest .
-          echo "Docker image built successfully"
-
-      - name: Transfer Docker Image
+      - name: Transfer Docker Compose Files
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          echo "Starting to transfer Docker image..."
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'rm -f /tmp/express-app.tar.gz'
-          docker save express-app:latest | gzip | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cat > /tmp/express-app.tar.gz'
-          echo "Docker image successfully transferred and saved"
+          echo "Transferring Docker Compose files..."
+          sshpass -e scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/docker-compose.yml
+          tar -czf app.tar.gz .
+          sshpass -e scp -o StrictHostKeyChecking=no app.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/app.tar.gz
+          echo "Files transferred successfully"
 
-      - name: Clean Up Old Images
+      - name: Deploy Application with Docker Compose
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          echo "Cleaning up old images and containers..."
+          echo "Starting application deployment with Docker Compose..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          docker image prune -f
-          docker container prune -f
-          EOF
-          echo "Clean up completed successfully"
+          # Распаковываем приложение
+          rm -rf /opt/express-app
+          mkdir -p /opt/express-app
+          tar -xzf /tmp/app.tar.gz -C /opt/express-app
+          rm /tmp/app.tar.gz
+          
+          # Перемещаем docker-compose.yml
+          mv /tmp/docker-compose.yml /opt/express-app/docker-compose.yml
 
-      - name: Install Dependencies in Container
-        env:
-          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
-        run: |
-          echo "Installing dependencies inside the container..."
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          docker load < /tmp/express-app.tar.gz
-          if [ "\$(docker ps -q -f name=express-app)" ]; then
-              docker stop express-app || true
-              docker rm express-app || true
-          fi
-          # Create and start a temporary container to install dependencies
-          docker create --name express-app express-app:latest
-          docker exec express-app npm install
-          docker start express-app
-          EOF
-          echo "Dependencies installed successfully in the container"
+          # Переходим в каталог приложения
+          cd /opt/express-app
 
-      - name: Deploy Application
-        env:
-          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
-        run: |
-          echo "Starting application deployment..."
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          if [ "\$(docker ps -q -f name=express-app)" ]; then
-              docker stop express-app || true
-              docker rm express-app || true
-          fi
-          docker run -d --name express-app -p 3000:3000 express-app:latest
+          # Удаляем старые контейнеры и образы
+          docker-compose down --remove-orphans
+          docker-compose build
+          
+          # Запускаем новое развертывание
+          docker-compose up -d
           EOF
+          echo "Deployment completed successfully"
