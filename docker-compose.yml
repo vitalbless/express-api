@@ -8,7 +8,7 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: 'mongodb://monty:pass@db:27017/mydatabase?authSource=admin&directConnection=true'
+      DATABASE_URL: 'mongodb://monty:pass@db:27017/mydatabase?authSource=admin&replicaSet=rs0'  # Обновить URL
     mem_limit: 256m
     mem_reservation: 128m
 
@@ -23,5 +23,6 @@ services:
       - /path/to/host/data:/data/db  # Используйте том для хранения данных
     mem_limit: 512m
     mem_reservation: 256m
+    command: ["mongod", "--replSet", "rs0", "--bind_ip", "0.0.0.0"]  # Добавленная команда для репликации
 
 
