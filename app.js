@@ -51,4 +51,14 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500).send('Server error');
 });
 
+app.use((err, req, res, next) => {
+  console.error(`Error: ${err.message}`);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message,
+      stack: err.stack,
+    },
+  });
+});
+
 module.exports = app;
