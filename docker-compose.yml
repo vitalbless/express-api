@@ -12,17 +12,15 @@ services:
     mem_reservation: 128m
 
   db:
-    image: prismagraphql/mongo-single-replica:5.0.3
+    image: mongo:5.0.3  # Используем официальный образ MongoDB
     ports:
       - '27017:27017'
     environment:
       MONGO_INITDB_ROOT_USERNAME: monty
       MONGO_INITDB_ROOT_PASSWORD: pass
-      # Отключение репликации
-      MONGO_REPLICA_SET_KEY: ""
-      MONGO_INITDB_REPLICA_SET_NAME: ""
-      # Убедитесь, что MongoDB запускается без репликации
     volumes:
       - /path/to/host/data:/data/db  # Используйте том для хранения данных
+    command: ["mongod", "--noauth", "--bind_ip_all"]  # Отключаем репликацию
     mem_limit: 512m
     mem_reservation: 256m
+
