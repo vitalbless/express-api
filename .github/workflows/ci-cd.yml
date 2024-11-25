@@ -18,10 +18,10 @@ jobs:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           echo "Transferring Docker Compose files..."
-          sshpass -e scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/docker-compose.yml
-          tar -czf app.tar.gz .
-          sshpass -e scp -o StrictHostKeyChecking=no app.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/app.tar.gz
-          echo "Files transferred successfully"
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            mkdir -p /tmp/docker-compose
+          EOF
+          tar --ignore-failed-read -czf - . | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cat > /tmp/docker-compose-files.tar.gz'
 
       - name: Deploy Application with Docker Compose
         env:
