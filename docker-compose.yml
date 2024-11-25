@@ -8,21 +8,22 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: 'mongodb://monty:pass@db:27017/mydatabase?authSource=admin&replicaSet=rs0'  # Обновить URL
+      DATABASE_URL: 'mongodb://monty:pass@db:27017/mydatabase?authSource=admin&replicaSet=rs0'
     mem_limit: 256m
     mem_reservation: 128m
 
   db:
-    image: mongo:5.0.3  # Используем официальный образ MongoDB
+    image: mongo:5.0.3
     ports:
       - '27017:27017'
     environment:
       MONGO_INITDB_ROOT_USERNAME: monty
       MONGO_INITDB_ROOT_PASSWORD: pass
     volumes:
+      - ./mongodb-keyfile:/etc/mongo/keyfile  # Монтируем созданный ключ
       - /path/to/host/data:/data/db  # Используйте том для хранения данных
     mem_limit: 512m
     mem_reservation: 256m
-    command: ["mongod", "--replSet", "rs0", "--bind_ip", "0.0.0.0"]  # Добавленная команда для репликации
+    command: ["mongod", "--replSet", "rs0", "--bind_ip", "0.0.0.0", "--keyFile", "/etc/mongo/keyfile"]  # Добавление ключа безопасности
 
 
