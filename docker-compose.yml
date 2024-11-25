@@ -2,6 +2,7 @@ version: '3'
 services:
   express-app:
     build: .
+    container_name: express-app
     ports:
       - '3000:3000'
     depends_on:
