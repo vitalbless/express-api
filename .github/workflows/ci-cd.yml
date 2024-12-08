@@ -47,31 +47,42 @@ jobs:
           EOF
           echo "Deployment completed successfully"
 
+      - name: Install Python and pip (if not installed)
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Installing Python and pip..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            sudo apt update
+            sudo apt install python3 python3-pip -y  # Установка Python и pip, если они не установлены
+          EOF
+
+      - name: Install Dependencies
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Installing dependencies..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            cd /opt/express-app  # Переход в каталог приложения
+            pip3 install -r requirements.txt  # Установка зависимостей из requirements.txt
+          EOF
+
       - name: Run API Tests
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           echo "Running API tests..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-            # Переходим в каталог приложения
-            cd /opt/express-app/tests
+            cd /opt/express-app/tests  # Переход в каталог с тестами
             
-            # Устанавливаем зависимости (если необходимо)
-            pip install -r requirements.txt
+            # Запускаем тесты с pytest
+            pytest > result.log; tail -n 10 result.log  # Сохраняем вывод тестов в файл и выводим последние 10 строк на экран
             
-            # Запускаем тесты
-            pytest tests/
-          EOF
-
-      - name: Check Test Results
-        run: |
-          echo "Checking test results..."
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-            # Проверяем статус последнего выполненного теста
-            if [ $? -ne 0 ]; then
+            if [ $? -ne 0 ]; then  # Проверяем статус выполнения тестов
               echo "Tests failed!"
               exit 1  # Завершаем процесс с ошибкой, если тесты не прошли
             else
               echo "All tests passed successfully."
             fi
           EOF
+
