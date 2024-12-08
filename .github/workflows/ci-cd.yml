@@ -3,31 +3,86 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main 
-  pull_request:
-    branches:
-      - main  
+      - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '19' 
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Start application
+      - name: Transfer Docker Compose Files
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          nohup npm start &  # Запускаем приложение в фоновом режиме
-          
-      - name: Get Public IP
-        run: curl https://api.ipify.org
+          echo "Transferring Docker Compose files..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            mkdir -p /tmp/docker-compose
+          EOF
+          tar --ignore-failed-read -czf - . | sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cat > /tmp/docker-compose-files.tar.gz'
+
+      - name: Deploy Application with Docker Compose
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Starting application deployment with Docker Compose..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            # Распаковываем архив с файлами
+            rm -rf /opt/express-app
+            mkdir -p /opt/express-app
+            tar -xzf /tmp/docker-compose-files.tar.gz -C /opt/express-app
+            rm /tmp/docker-compose-files.tar.gz
+            
+            # Переходим в каталог приложения
+            cd /opt/express-app
+
+            # Удаляем старые контейнеры и образы
+            docker compose down --remove-orphans
+            docker compose build
+            
+            # Запускаем новое развертывание
+            docker compose up -d
+          EOF
+          echo "Deployment completed successfully"
+
+      - name: Install Python and pip (if not installed)
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Installing Python and pip..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            sudo apt update
+            sudo apt install python3 python3-pip -y  # Установка Python и pip, если они не установлены
+          EOF
+
+      - name: Install Dependencies
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Installing dependencies..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            cd /opt/express-app  # Переход в каталог приложения
+            pip3 install -r requirements.txt  # Установка зависимостей из requirements.txt
+          EOF
+
+      - name: Run API Tests
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Running API tests..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            cd /opt/express-app/tests  # Переход в каталог с тестами
+            
+            # Запускаем тесты с pytest
+            pytest > result.log; tail -n 10 result.log  # Сохраняем вывод тестов в файл и выводим последние 10 строк на экран
+            
+            if [ $? -ne 0 ]; then  # Проверяем статус выполнения тестов
+              echo "Tests failed!"
+              exit 1  # Завершаем процесс с ошибкой, если тесты не прошли
+            else
+              echo "All tests passed successfully."
+            fi
+          EOF
 

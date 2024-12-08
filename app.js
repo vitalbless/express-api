@@ -14,14 +14,25 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.set('view engine', 'jade');
-//Раздача статических файлов из папки 'uploads' она создается автоматически
+
+// Убираем настройку для view engine, так как она не нужна для серверных ошибок
+// app.set('view engine', 'ejs');
+
+// Главная страница
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
+// Убираем настройку для favicon.ico
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// Раздача статических файлов из папки 'uploads'
 app.use('uploads', express.static('uploads'));
 
 app.use('/api', require('./routes'));
-//existsSyncs проверяет есть ли какая то папка
+
+// Проверка и создание папки 'uploads'
 if (!fs.existsSync('uploads')) {
-  //если false то создаем папку
   fs.mkdirSync('uploads');
 }
 
@@ -32,13 +43,22 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  // Логирование ошибки в консоль
+  console.error(`Error: ${err.message}`);
+  console.error(err.stack);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  // Отправка стандартного ответа 500, без рендеринга страницы
+  res.status(err.status || 500).send('Server error');
+});
+
+app.use((err, req, res, next) => {
+  console.error(`Error: ${err.message}`);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message,
+      stack: err.stack,
+    },
+  });
 });
 
 module.exports = app;
