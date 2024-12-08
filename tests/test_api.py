@@ -17,8 +17,7 @@ def create_user():
         "name": "Test User"
     }
     response = requests.post(f'{BASE_URL}/register', json=user_data)
-    print(f"Register user response status code: {response.status_code}")  # Выводим статус-код
-    assert response.status_code == 200  # Проверяем успешную регистрацию
+    assert response.status_code == 200 
     return response.json()
 
 def get_auth_token(email, password):
@@ -28,8 +27,7 @@ def get_auth_token(email, password):
         "password": password
     }
     response = requests.post(f'{BASE_URL}/login', json=login_data)
-    print(f"Login response status code: {response.status_code}")  # Выводим статус-код
-    assert response.status_code == 200  # Проверяем успешный вход
+    assert response.status_code == 200 
     return response.json()['token']
 
 def test_register_user(create_user):
@@ -40,7 +38,6 @@ def test_register_user(create_user):
 def test_register_existing_user(create_user):
     """Тестирование регистрации существующего пользователя."""
     response = requests.post(f'{BASE_URL}/register', json=create_user)
-    print(f"Register existing user response status code: {response.status_code}")  # Выводим статус-код
     assert response.status_code == 400
     assert response.json()['error'] == 'Пользователь уже существует'
 
@@ -56,7 +53,6 @@ def test_login_invalid_credentials():
         "password": "wrongpassword"
     }
     response = requests.post(f'{BASE_URL}/login', json=login_data)
-    print(f"Login invalid credentials response status code: {response.status_code}")  # Выводим статус-код
     assert response.status_code == 400
     assert response.json()['error'] == 'Неверный логин или пароль'
 
@@ -70,7 +66,6 @@ def test_get_user_by_id(create_user):
     
     response = requests.get(f'{BASE_URL}/users/{user_id}', headers=headers)
     
-    print(f"Get user by ID response status code: {response.status_code}")  # Выводим статус-код
     assert response.status_code == 200
     assert response.json()['email'] == create_user['email']
 
@@ -88,7 +83,6 @@ def test_update_user(create_user):
     
     response = requests.put(f'{BASE_URL}/users/{user_id}', json=update_data, headers=headers)
     
-    print(f"Update user response status code: {response.status_code}")  # Выводим статус-код
     assert response.status_code == 200
     assert response.json()['name'] == update_data['name']
 
@@ -101,7 +95,6 @@ def test_current_user(create_user):
     
     response = requests.get(f'{BASE_URL}/current', headers=headers)
     
-    print(f"Current user response status code: {response.status_code}")  # Выводим статус-код
     assert response.status_code == 200
     assert response.json()['email'] == create_user['email']
 
@@ -118,7 +111,6 @@ def test_create_post(create_user):
    
    response = requests.post(f'{BASE_URL}/posts', json=post_data, headers=headers)
    
-   print(f"Create post response status code: {response.status_code}")  # Выводим статус-код
    assert response.status_code == 200
    assert 'id' in response.json()
 
@@ -131,7 +123,6 @@ def test_get_all_posts(create_user):
    
    response = requests.get(f'{BASE_URL}/posts', headers=headers)
    
-   print(f"Get all posts response status code: {response.status_code}")  # Выводим статус-код
    assert response.status_code == 200
    assert isinstance(response.json(), list)
 
@@ -147,6 +138,5 @@ def test_delete_post(create_user):
    
    delete_response = requests.delete(f'{BASE_URL}/posts/{post_id}', headers=headers)
    
-   print(f"Delete post response status code: {delete_response.status_code}")  # Выводим статус-код
    assert delete_response.status_code == 200
    assert delete_response.json() is not None
