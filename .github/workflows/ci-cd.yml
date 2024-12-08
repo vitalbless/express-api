@@ -29,20 +29,49 @@ jobs:
         run: |
           echo "Starting application deployment with Docker Compose..."
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          # Распаковываем архив с файлами
-          rm -rf /opt/express-app
-          mkdir -p /opt/express-app
-          tar -xzf /tmp/docker-compose-files.tar.gz -C /opt/express-app
-          rm /tmp/docker-compose-files.tar.gz
-          
-          # Переходим в каталог приложения
-          cd /opt/express-app
+            # Распаковываем архив с файлами
+            rm -rf /opt/express-app
+            mkdir -p /opt/express-app
+            tar -xzf /tmp/docker-compose-files.tar.gz -C /opt/express-app
+            rm /tmp/docker-compose-files.tar.gz
+            
+            # Переходим в каталог приложения
+            cd /opt/express-app
 
-          # Удаляем старые контейнеры и образы
-          docker compose down --remove-orphans
-          docker compose build
-          
-          # Запускаем новое развертывание
-          docker compose up -d
+            # Удаляем старые контейнеры и образы
+            docker compose down --remove-orphans
+            docker compose build
+            
+            # Запускаем новое развертывание
+            docker compose up -d
           EOF
           echo "Deployment completed successfully"
+
+      - name: Run API Tests
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          echo "Running API tests..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            # Переходим в каталог приложения
+            cd /opt/express-app/tests
+            
+            # Устанавливаем зависимости (если необходимо)
+            pip install -r requirements.txt
+            
+            # Запускаем тесты
+            pytest tests/
+          EOF
+
+      - name: Check Test Results
+        run: |
+          echo "Checking test results..."
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            # Проверяем статус последнего выполненного теста
+            if [ $? -ne 0 ]; then
+              echo "Tests failed!"
+              exit 1  # Завершаем процесс с ошибкой, если тесты не прошли
+            else
+              echo "All tests passed successfully."
+            fi
+          EOF
