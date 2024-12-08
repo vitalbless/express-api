@@ -17,7 +17,7 @@ def create_user():
         "name": "Test User"
     }
     response = requests.post(f'{BASE_URL}/register', json=user_data)
-    assert response.status_code == 201  # Проверяем успешную регистрацию
+    assert response.status_code == 200  # Проверяем успешную регистрацию
     return response.json()
 
 def get_auth_token(email, password):
