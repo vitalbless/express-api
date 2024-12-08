@@ -8,18 +8,19 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: 'mongodb://monty:pass@db:27017/mydatabase?authSource=admin&replicaSet=rs0'
+      DATABASE_URL: 'mongodb+srv://daniilussuslov:y0FOgTR9W91sJ9FR@cluster0.4vlqg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
     mem_limit: 256m
     mem_reservation: 128m
 
-  db:
-    image: mongo:5.0.3
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: monty
-      MONGO_INITDB_ROOT_PASSWORD: pass
-    volumes:
-      - ./mongodb-keyfile:/etc/mongo/keyfile
-    command: ["--replSet", "rs0", "--keyFile", "/etc/mongo/keyfile"]
+  # db:
+#   image: mongo:5.0.3
+#   environment:
+#     MONGO_INITDB_ROOT_USERNAME: monty
+#     MONGO_INITDB_ROOT_PASSWORD: pass
+#   volumes:
+#     - ./mongodb-keyfile:/etc/mongo/keyfile
+#   command: ["--replSet", "rs0", "--keyFile", "/etc/mongo/keyfile"]
+
 
 
 
